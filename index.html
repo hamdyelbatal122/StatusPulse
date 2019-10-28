@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html style="height: 100%">
+  <head>
+    <title>One Health</title>
+    <link rel="stylesheet" type="text/css" href="assets/mainstyle.css" />
+    <link rel="stylesheet" type="text/css" href="assets/headerstyle.css" />
+    <link rel="stylesheet" type="text/css" href="assets/style-min.css" />
+    <script type="text/javascript" src="assets/mainscript-min.js"> </script>
+    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:200" rel="stylesheet">
+  </head>
+  <body style="display: flex; height: 100%; flex-direction: column">
+    <div>
+        <div class="header1 display: flex; height: 100%; flex-direction: column" style="height:40px; text-align: center; background-color:#1a1a1a;">
+          <h1 id="hea" style="color:#ffffff; font-size:x-large; margin-top: 1px; margin-left: 15px; float:left; font-family: 'Titillium Web', sans-serif;">One</h1>
+          <h1 id="hea" style="color:#10ffd5; font-size:x-large; margin-top: 1px; margin-left: 5px; float:left; font-family: 'Titillium Web', sans-serif;">Health</h1>
+          <input type="date" min="2018-08-12" class="display: flex; height: 100%; flex-direction: column;" id='dt' onchange="choosingComp();" style="float:right; margin-top: 10px;margin-right: 40px; text-align:left;"/>
+          <ul class="nav site-nav" style="float:right; margin-top: 10px;margin-right: 10px; text-align:left;">
+            <li class=flyout>
+              <a href=# id='currcomp' title='ma' >Main Applications</a>
+                <ul class="flyout-content nav stacked">
+                    <li><a href=# id='ma' onClick="updateTitle(this.id);choosingComp();">Main Application</a></li>
+                    <li><a href=# id='sa1' onClick="updateTitle(this.id);choosingComp();">Sub Application 1</a></li>
+                    <li><a href=# id='sa2' onClick="updateTitle(this.id);choosingComp();">Sub Application 2</a></li>
+                    <li><a href=# id='sa3' onClick="updateTitle(this.id);choosingComp();">Sub Application 3</a></li>
+                <!--ADDCOMPONENTS-->
+		            </ul>
+              </li>
+             <li ><a href=#>Refresh every 30s</a></li>
+            </ul>
+          </div>
+        <div>
+      </div>
+    </div>
+    <div style="flex: 1; overflow: auto" class="ex3">
+        <iframe id="myFrame" src="today.html" onload="resizeIframe(this)"></iframe>
+      </div>
+  </body>
+</html>
