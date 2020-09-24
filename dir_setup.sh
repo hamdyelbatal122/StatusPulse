@@ -2,7 +2,7 @@
 #set -x
 
 check_folder(){
-	dir=$1
+	dir=$
 	if [[ -z ${dir} ]];
 	then
 		return True
