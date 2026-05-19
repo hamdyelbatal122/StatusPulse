@@ -1,10 +1,6 @@
 # 📊 StatusPulse: Bash-Driven Service Health Dashboard
 
 <p align="center">
-  <img src="images/StatusPulse.png" alt="StatusPulse Dashboard Preview" width="600" style="border-radius: 12px; box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.47);" />
-</p>
-
-<p align="center">
   <a href="https://www.gnu.org/software/bash/">
     <img src="https://img.shields.io/badge/Made%20with-Bash-1f425f.svg" alt="Made with Bash" />
   </a>
