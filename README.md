@@ -42,8 +42,8 @@
 ### 1. Installation & Workspace Setup
 Clone the repository and prepare the configurations:
 ```bash
-git clone https://github.com/hamdyelbatal122/shell-Mon_Application.git
-cd shell-Mon_Application
+git clone https://github.com/hamdyelbatal122/StatusPulse.git
+cd StatusPulse
 mkdir -p config
 touch config/app.conf
 ```
@@ -75,10 +75,10 @@ Automate StatusPulse by setting up standard Linux system cron scheduling. Open y
 
 ```text
 # 1. Initialize the dashboard grid canvas daily at midnight (00:00)
-0 0 * * * /home/hamdy/Desktop/Github/shell-Mon_Application/indexcreator.sh a
+0 0 * * * /home/hamdy/Desktop/Github/StatusPulse/indexcreator.sh a
 
 # 2. Audit and update endpoint status tiles twice an hour (at the 1st and 31st minutes)
-1,31 * * * * /home/hamdy/Desktop/Github/shell-Mon_Application/addtile.sh a
+1,31 * * * * /home/hamdy/Desktop/Github/StatusPulse/addtile.sh a
 ```
 
 *Note: Verify that paths point to your absolute directory location.*
