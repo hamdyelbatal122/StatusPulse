@@ -1,212 +1,300 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# StatusPulse - Index Creator Script
+# Initializes the daily service monitoring SVG page and sets up components.
+# ==============================================================================
 
-#!/bin/bash
-#set -x
+set -eo pipefail
 
-enfilevar_setup(){
-	STATFILE=`echo $CURRHOME/StatusOutput`
-	OUT=`echo $CURRHOME/today.html`
-	CONFIG=`echo $CURRHOME/config/app.conf`
-	INST_URLS=`echo $CURRHOME/config/instanceurl_file`
-	INST_NAMES=`echo $CURRHOME/config/instance_names`
-	XDATAFILE=`echo $CURRHOME/xdata.pid`
+# Error Handler
+error_exit() {
+  echo "Error: $1" >&2
+  exit 1
 }
 
-ienfilevar_setup(){
-	instance=$i;
-	CONFIG=`echo $CURRHOME/config/$instance.insta`;
-	CURRHOME=`echo $CURRHOME/instances/$i`;
-	STATFILE=`echo $CURRHOME/StatusOutput`
-	OUT=`echo $CURRHOME/index.html`
-	INST_URLS=`echo $CURRHOME/config/$i'_instanceurl_file'`
-	INST_NAMES=`echo $CURRHOME/config/$i_'instance_names'`
-	XDATAFILE=`echo $CURRHOME/xdata.pid`
+# Environment & File Variables Setup
+enfilevar_setup() {
+  STATFILE="${CURRHOME}/StatusOutput"
+  OUT="${CURRHOME}/today.html"
+  CONFIG_PATH="${CURRHOME}/config/app.conf"
+  INST_URLS="${CURRHOME}/config/instanceurl_file"
+  INST_NAMES="${CURRHOME}/config/instance_names"
+  XDATAFILE="${CURRHOME}/xdata.pid"
 }
 
-envar_setup(){
-	avgspacefortile=32
-	height=`expr \`cat $CONFIG | wc -l\` \* $avgspacefortile`
-	FRAME='<!DOCTYPE html><html lang="en"><head><title>App Mon</title><link rel="icon" type="image/x-icon" href="favicon.ico" /><meta http-equiv="content-type" content="text/html; charset=UTF-8"></meta><meta http-equiv="refresh" content="30"></meta></head><style>body{background-color:black}h1{Color:white}.pass{fill:green}.fail{fill:red}.warn{fill:orange}.status{fill:gray}svg{font-size:14px;fill:#fff;background-color:black;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol"}text.month-90deg{transform:rotate(90deg)}</style><body><div><div>'
-	SIZEDEF="<svg width=\"1900\" height=\"$height\">"
-	HEADER=`echo $FRAME $SIZEDEF`
-	FOOTER='</svg></div></div></div></body></html>'
-	GTRANSFORM='<g transform="translate(0, 40)">'
-	CLOSEG='</g>'
-	TILE='<rect class=status width=20 height=20 x=xdata y=ydata v=version />'
-	CLOCK='<text x=xtimloc y=ytimloc>hour:00</text>'
-	COMP='<text dx=xaxis dy=yaxis>comp</text>'
-	ver_re='^[0-9]+([.][0-9]+)?$'
-	CURRDATE=`date -d "-1 days" +%Y%m%d`
+# Instance-level File Variables Setup
+ienfilevar_setup() {
+  local instance="$1"
+  CONFIG_PATH="${CURRHOME}/config/${instance}.insta"
+  CURRHOME="${CURRHOME}/instances/${instance}"
+  STATFILE="${CURRHOME}/StatusOutput"
+  OUT="${CURRHOME}/index.html"
+  INST_URLS="${CURRHOME}/config/${instance}_instanceurl_file"
+  INST_NAMES="${CURRHOME}/config/${instance}_instance_names"
+  XDATAFILE="${CURRHOME}/xdata.pid"
 }
 
+# Setup Design Tokens and SVG Framework Elements
+envar_setup() {
+  avgspacefortile=32
+  
+  if [ ! -f "$CONFIG_PATH" ]; then
+    error_exit "Configuration file missing at: $CONFIG_PATH"
+  fi
+  
+  local line_count
+  line_count=$(wc -l < "$CONFIG_PATH")
+  height=$((line_count * avgspacefortile + 60))
+  
+  # Premium Glassmorphic design style matching StatusPulse dashboard
+  FRAME='<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>StatusPulse Service Grid</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+  <meta http-equiv="refresh" content="30" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Outfit:wght@500;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #0b0f19;
+      margin: 0;
+      padding: 0;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+    svg {
+      background-color: #0b0f19;
+      font-family: "Inter", -apple-system, sans-serif;
+      user-select: none;
+    }
+    .pass {
+      fill: #10b981;
+      filter: drop-shadow(0 0 2px rgba(16, 185, 129, 0.4));
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .pass:hover {
+      fill: #34d399;
+      filter: drop-shadow(0 0 6px rgba(52, 211, 153, 0.8));
+    }
+    .fail {
+      fill: #ef4444;
+      filter: drop-shadow(0 0 2px rgba(239, 68, 68, 0.4));
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .fail:hover {
+      fill: #f87171;
+      filter: drop-shadow(0 0 6px rgba(248, 113, 113, 0.8));
+    }
+    .warn {
+      fill: #f59e0b;
+      filter: drop-shadow(0 0 2px rgba(245, 158, 11, 0.4));
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .warn:hover {
+      fill: #fbbf24;
+      filter: drop-shadow(0 0 6px rgba(251, 191, 36, 0.8));
+    }
+    .status {
+      fill: #1e293b;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .status:hover {
+      fill: #334155;
+    }
+    text.comp-name {
+      fill: #f3f4f6;
+      font-size: 13px;
+      font-weight: 500;
+      font-family: "Outfit", sans-serif;
+    }
+    text.clock-label {
+      fill: #64748b;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+  </style>
+</head>
+<body>
+<div>
+  <div>'
+  
+  SIZEDEF="<svg width=\"1900\" height=\"$height\">"
+  HEADER="${FRAME}${SIZEDEF}"
+  FOOTER='</svg></div></div></body></html>'
+  GTRANSFORM='<g transform="translate(0, 40)">'
+  CLOSEG='</g>'
+  TILE='<rect class="status" width="22" height="22" rx="6" ry="6" x="xdata" y="ydata" v="version" />'
+  CLOCK='<text class="clock-label" x="xtimloc" y="ytimloc">hour:00</text>'
+  COMP='<text class="comp-name" x="xaxis" y="yaxis">__COMP__</text>'
+  ver_re='^[0-9]+([.][0-9]+)?$'
+  CURRDATE=$(date -d "-1 days" +%Y%m%d)
+}
+
+# Read Configuration Content and parse Headers and URLs
 read_config() {
-	CONFIG=`cat $CONFIG`;
-	if [[ `echo $CONFIG` == *,* ]];
-	then
-		COMPHEADER=`echo $CONFIG | sed 's/,[A-Za-z0-9.:-]*//g' | sed 's/\/[A-Za-z0-9-]*//g' |  sed 's/fulfillment-//g'`;
-		COMPURL=`echo $CONFIG | sed 's/[A-Za-z0-9_-/]*,//g'`;
-	elif [[ `echo $CONFIG` == */* ]];
-	then
-		COMPHEADER=`echo $CONFIG | sed 's/[A-Za-z0-9.:-]*\///g' | sed 's/fulfillment-//g'`;
-		COMPURL=`echo $CONFIG`;
-	elif ! ([[ `echo $CONFIG` == *,* ]] || [[ `echo $CONFIG` == */* ]]);
-	then
-		COMPHEADER=`cat $INST_NAMES`
-		COMPURL=`cat $INST_URLS`
-	else
-		echo "<h1>Can't monitor the application. Config file is missing or corrupted.</h1>">>$OUT
-		exit 1
-	fi;
-}
-
-xdatafile_checker(){
-if [ -f ${XDATAFILE} ]
-then
-        rm $XDATAFILE
-fi
-}
-
-statfile_checker(){
-if [ -f ${STATFILE} ]
-	then
-		rm $STATFILE
-	fi
-}
-
-remove_vhost()
-{
-	if [ -f vhost_unknown* ]
-	then
-		rm vhost_unknown*
-	fi
-}
-
-env_check(){
-if [ -f ${OUT} ]
-  then
-	index_end
-	if [[ "$OUT" =~ '/instances/' ]]
-	then
-		instarchpath=`echo "$OUT" | rev | cut -d"/" -f2- | rev`; 
-		instarchpath=$instarchpath/$CURRDATE.html; 
-		mv $OUT $instarchpath
-	else
-		mv $OUT $CURRDATE.html
-	fi
-	xdatafile_checker
+  local content
+  content=$(cat "$CONFIG_PATH")
+  
+  if [[ "$content" == *,* ]]; then
+    COMPHEADER=$(echo "$content" | sed 's/,[A-Za-z0-9.:-]*//g' | sed 's/\/[A-Za-z0-9-]*//g' | sed 's/fulfillment-//g')
+    COMPURL=$(echo "$content" | sed 's/[A-Za-z0-9_/-]*,//g')
+  elif [[ "$content" == */* ]]; then
+    COMPHEADER=$(echo "$content" | sed 's/[A-Za-z0-9.:-]*\///g' | sed 's/fulfillment-//g')
+    COMPURL="$content"
+  elif ! ([[ "$content" == *,* ]] || [[ "$content" == */* ]]); then
+    if [ -f "$INST_NAMES" ] && [ -f "$INST_URLS" ]; then
+      COMPHEADER=$(cat "$INST_NAMES")
+      COMPURL=$(cat "$INST_URLS")
+    else
+      error_exit "Required instances config files are missing."
+    fi
+  else
+    echo "<h1>Can't monitor the application. Config file is missing or corrupted.</h1>" >> "$OUT"
+    exit 1
   fi
 }
 
-index_start(){
-	echo $HEADER>>$OUT
-	echo $GTRANSFORM>>$OUT
+xdatafile_checker() {
+  if [ -f "${XDATAFILE}" ]; then
+    rm -f "${XDATAFILE}"
+  fi
 }
 
-get_compnt_list()
-{
-	apps=`echo $COMPHEADER`
+statfile_checker() {
+  if [ -f "${STATFILE}" ]; then
+    rm -f "${STATFILE}"
+  fi
 }
 
-index_addcomp(){
-  xaxis=15
-  yaxis=20
-  xdata=350
-  ydata=5
-  for app in $apps
-    do
-      echo $COMP | sed "s/comp/$app/g" | sed "s/xaxis/$xaxis/g" | sed "s/yaxis/$yaxis/g">>$OUT
-      yaxis=$((yaxis+30))
-    done
-
-  xtimloc=360
-  ytimloc=-10
-  for hour in {00..23}
-    do
-       echo $CLOCK |  sed "s/hour/$hour/g" | sed "s/xtimloc/$xtimloc/g" | sed "s/ytimloc/$ytimloc/g">>$OUT
-       xtimloc=$((xtimloc+60))
-    done
+remove_vhost() {
+  rm -f vhost_unknown* 2>/dev/null || true
 }
 
-index_addafterblack(){
-  for xdata in {1800..1850..30}
-    do
-      echo "<rect width=20 height=20 fill="#000000" x=$xdata y=0 />">>$OUT
-    done
+# Rotate and archive old index/today HTML outputs
+env_check() {
+  if [ -f "${OUT}" ]; then
+    index_end
+    if [[ "$OUT" =~ '/instances/' ]]; then
+      local instarchpath
+      instarchpath=$(echo "$OUT" | rev | cut -d"/" -f2- | rev)
+      instarchpath="${instarchpath}/${CURRDATE}.html"
+      mv "${OUT}" "${instarchpath}"
+    else
+      mv "${OUT}" "${CURRDATE}.html"
+    fi
+    xdatafile_checker
+  fi
 }
 
-index_end(){
-   echo $CLOSEG>>$OUT
-   echo $FOOTER>>$OUT
+index_start() {
+  echo "$HEADER" >> "$OUT"
+  echo "$GTRANSFORM" >> "$OUT"
 }
 
-executor(){
-	envar_setup
-	env_check
-	statfile_checker
-	index_start
-	read_config
-	get_compnt_list
-	index_addcomp
+get_compnt_list() {
+  apps="$COMPHEADER"
 }
 
-instmain_setup(){
-	# if instance config exists, extract the component details and store in variable
-	if ls config/*.insta >/dev/null 2>&1;then  instacomp=`ls config/*.insta | awk -F/ '{print $NF}' | sed 's/\.insta//g'`; else echo "Instance file doesnt exists"; exit 0; fi
-	# for-each component, check if there is already a directory exists; else create one
-	for i in $instacomp;
-	  do
-	    if [ -d $i ]; then
-		:
-	        # echo "Component : $i"
-		# echo "Instance directory exists. Ignoring this iter";
-	# 	Check the index.html file for that folder
-	#	if [ -f "$i/index.html" ]; then
-	#		echo "Both Instance directory and index.html already exits."
-		# archive the index.html
-	#		index_end
-	#	fi
-		# Create index.html in - $i/index.html
-	    else
-	      # echo "Instance directory doesn't exists";
-		# Create directory and index file for that folder
-	      mkdir $i
-	    fi
-  	  ienfilevar_setup $i
-	  executor
-	done
+# Inject the visual Grid components and time headers
+index_addcomp() {
+  local xaxis=15
+  local yaxis=20
+  local xdata=350
+  local ydata=5
+  
+  # Write component titles
+  while read -r app; do
+    if [ -n "$app" ]; then
+      echo "$COMP" | sed "s/__COMP__/$app/g" | sed "s/xaxis/$xaxis/g" | sed "s/yaxis/$yaxis/g" >> "$OUT"
+      yaxis=$((yaxis + 30))
+    fi
+  done <<< "$apps"
+
+  # Write timeline hours
+  local xtimloc=360
+  local ytimloc=-10
+  for hour in {00..23}; do
+    echo "$CLOCK" | sed "s/hour/$hour/g" | sed "s/xtimloc/$xtimloc/g" | sed "s/ytimloc/$ytimloc/g" >> "$OUT"
+    xtimloc=$((xtimloc + 60))
+  done
 }
 
-appmain_setup(){
-	enfilevar_setup
-	executor
+index_addafterblack() {
+  for xval in {1800..1850..30}; do
+    echo "<rect width=\"20\" height=\"20\" fill=\"#0b0f19\" x=\"$xval\" y=\"0\" />" >> "$OUT"
+  done
 }
 
-main(){
-	EXEFOR=$1
-	if [ "$EXEFOR" == "i" ]
-	then
-	   # echo "It is for instance level"
- 	   instmain_setup
-	elif [ "$EXEFOR" == "a" ]
-	then
-	   # echo "It is for application level"
-	    appmain_setup
-	else
-	   # echo "Unknown command. Exiting terminal"
-	   exit 0
-	fi
+index_end() {
+  echo "$CLOSEG" >> "$OUT"
+  echo "$FOOTER" >> "$OUT"
 }
 
-cd "$(dirname "$0")";
-CURRHOME=`pwd`
-if [ $# -eq 1 ]
-then
-	EXEFOR=$1
-elif [ $# -eq 0 ]
-then
-	# echo "it is for all"
-	appmain_setup
+# Core compiler routine
+executor() {
+  envar_setup
+  env_check
+  statfile_checker
+  index_start
+  read_config
+  get_compnt_list
+  index_addcomp
+}
+
+# Setup instances configuration maps
+instmain_setup() {
+  if ls config/*.insta >/dev/null 2>&1; then
+    instacomp=$(ls config/*.insta | awk -F/ '{print $NF}' | sed 's/\.insta//g')
+  else
+    echo "Instance file doesn't exist"
+    exit 0
+  fi
+  
+  for i in $instacomp; do
+    if [ ! -d "$i" ]; then
+      mkdir -p "$i"
+    fi
+    ienfilevar_setup "$i"
+    executor
+  done
+}
+
+appmain_setup() {
+  enfilevar_setup
+  executor
+}
+
+main() {
+  local exefor="$1"
+  if [ "$exefor" == "i" ]; then
+    instmain_setup
+  elif [ "$exefor" == "a" ]; then
+    appmain_setup
+  else
+    exit 0
+  fi
+}
+
+# Program Entry Point
+cd "$(dirname "$0")"
+CURRHOME=$(pwd)
+
+EXEFOR="a"
+if [ $# -eq 1 ]; then
+  EXEFOR="$1"
+elif [ $# -eq 0 ] ; then
+  appmain_setup
+  exit 0
 else
-	# echo "Unauthorized usage.Exiting the command line."
-	exit 0
+  exit 0
 fi
-main $EXEFOR
+
+main "$EXEFOR"

@@ -1,38 +1,159 @@
 <!DOCTYPE html>
-<html style="height: 100%">
-  <head>
-    <title>One Health</title>
-    <link rel="stylesheet" type="text/css" href="assets/mainstyle.css" />
-    <link rel="stylesheet" type="text/css" href="assets/headerstyle.css" />
-    <link rel="stylesheet" type="text/css" href="assets/style-min.css" />
-    <script type="text/javascript" src="assets/mainscript-min.js"> </script>
-    <link href="https://fonts.googleapis.com/css?family=Titillium+Web:200" rel="stylesheet">
-  </head>
-  <body style="display: flex; height: 100%; flex-direction: column">
-    <div>
-        <div class="header1 display: flex; height: 100%; flex-direction: column" style="height:40px; text-align: center; background-color:#1a1a1a;">
-          <h1 id="hea" style="color:#ffffff; font-size:x-large; margin-top: 1px; margin-left: 15px; float:left; font-family: 'Titillium Web', sans-serif;">One</h1>
-          <h1 id="hea" style="color:#10ffd5; font-size:x-large; margin-top: 1px; margin-left: 5px; float:left; font-family: 'Titillium Web', sans-serif;">Health</h1>
-          <input type="date" min="2018-08-12" class="display: flex; height: 100%; flex-direction: column;" id='dt' onchange="choosingComp();" style="float:right; margin-top: 10px;margin-right: 40px; text-align:left;"/>
-          <ul class="nav site-nav" style="float:right; margin-top: 10px;margin-right: 10px; text-align:left;">
-            <li class=flyout>
-              <a href=# id='currcomp' title='ma' >Main Applications</a>
-                <ul class="flyout-content nav stacked">
-                    <li><a href=# id='ma' onClick="updateTitle(this.id);choosingComp();">Main Application</a></li>
-                    <li><a href=# id='sa1' onClick="updateTitle(this.id);choosingComp();">Sub Application 1</a></li>
-                    <li><a href=# id='sa2' onClick="updateTitle(this.id);choosingComp();">Sub Application 2</a></li>
-                    <li><a href=# id='sa3' onClick="updateTitle(this.id);choosingComp();">Sub Application 3</a></li>
-                <!--ADDCOMPONENTS-->
-		            </ul>
-              </li>
-             <li ><a href=#>Refresh every 30s</a></li>
-            </ul>
-          </div>
-        <div>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StatusPulse | Advanced Bash-Driven Service Health Dashboard</title>
+  
+  <!-- Premium Modern Typography -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" type="text/css" href="assets/headerstyle.css" />
+  <link rel="stylesheet" type="text/css" href="assets/mainstyle.css" />
+  <link rel="stylesheet" type="text/css" href="assets/style-min.css" />
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  
+  <script type="text/javascript" src="assets/mainscript-min.js"></script>
+</head>
+<body>
+  <!-- Atmospheric Gradient Glow effects -->
+  <div class="glow-bg glow-1"></div>
+  <div class="glow-bg glow-2"></div>
+
+  <div class="app-container">
+    <!-- Header Command Bar -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="pulse-icon">
+          <svg viewBox="0 0 24 24" width="26" height="26" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="logo-text">
+          <span class="logo-title">Status<span class="logo-highlight">Pulse</span></span>
+          <span class="logo-subtitle">Real-time Service Health Monitor</span>
+        </div>
       </div>
-    </div>
-    <div style="flex: 1; overflow: auto" class="ex3">
+      
+      <div class="header-controls">
+        <!-- Dyn status update badge -->
+        <div id="system-status" class="status-badge unknown">
+          <span class="status-dot unknown"></span>Connecting...
+        </div>
+        
+        <!-- Custom Calendar datepicker -->
+        <div class="control-item">
+          <label for="dt">Timeline Date</label>
+          <input type="date" id="dt" min="2018-08-12" onchange="choosingComp();" />
+        </div>
+        
+        <!-- Glassmorphism Dropdown -->
+        <div class="control-item">
+          <label>Scope Selector</label>
+          <div class="custom-dropdown">
+            <button class="dropdown-btn" id="currcomp" title="ma">Main Applications</button>
+            <div class="dropdown-content">
+              <a href="#" id="ma" onclick="updateTitle(this.id); choosingComp();">Main Applications</a>
+              <a href="#" id="sa1" onclick="updateTitle(this.id); choosingComp();">Sub Application 1</a>
+              <a href="#" id="sa2" onclick="updateTitle(this.id); choosingComp();">Sub Application 2</a>
+              <a href="#" id="sa3" onclick="updateTitle(this.id); choosingComp();">Sub Application 3</a>
+              <!--ADDCOMPONENTS-->
+            </div>
+          </div>
+        </div>
+
+        <!-- Reloading status notifier -->
+        <div class="refresh-indicator">
+          <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" stroke-width="2" fill="none" class="spin-icon">
+            <polyline points="23 4 23 10 17 10"></polyline>
+            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+          </svg>
+          <span>Auto Refresh (30s)</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Glassmorphic Executive Status Grid -->
+    <section class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon uptime">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Calculated Uptime</span>
+          <span class="stat-value" id="stat-uptime">0%</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon healthy">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Healthy Endpoints</span>
+          <span class="stat-value" id="stat-healthy">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon critical">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+            <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Critical Alerts</span>
+          <span class="stat-value" id="stat-critical">0</span>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon total">
+          <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none">
+            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+            <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+            <line x1="12" y1="22.08" x2="12" y2="12"></line>
+          </svg>
+        </div>
+        <div class="stat-info">
+          <span class="stat-label">Total Node Tiles</span>
+          <span class="stat-value" id="stat-total">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Main Viewport (Visual SVG Board container) -->
+    <main class="dashboard-viewport">
+      <div class="viewport-header">
+        <div class="viewport-title">
+          <span class="indicator"></span> Interactive Grid Monitor
+        </div>
+        <div class="viewport-meta">
+          <span>Updates automatically • Double-click grids to check logs</span>
+        </div>
+      </div>
+      <div class="iframe-wrapper">
         <iframe id="myFrame" src="today.html" onload="resizeIframe(this)"></iframe>
       </div>
-  </body>
+    </main>
+
+    <!-- UI Footer -->
+    <footer class="app-footer">
+      <div>StatusPulse Dash &copy; 2026. A lightweight, Bash-Powered micro-service monitor.</div>
+      <div class="footer-links">
+        <a href="https://github.com/hamdyelbatal122/shell-Mon_Application" target="_blank">Repository Documentation</a>
+      </div>
+    </footer>
+  </div>
+</body>
 </html>
